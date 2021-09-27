@@ -1,0 +1,75 @@
+version: "3"
+services:
+  swagger-ui:
+    container_name: api_spec
+    image: swaggerapi/swagger-ui
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - ./api_spec.json:/api_spec.json
+    environment:
+      SWAGGER_JSON: /api_spec.json
+    networks:
+      - category_restful
+
+  mysql:
+    container_name: db_mysql
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - gorestfulapi-volume:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 3311:3306
+    networks:
+      - category_restful
+
+  mysql_test:
+    container_name: db_mysql_test
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD_TEST}
+      MYSQL_DATABASE: ${DB_DATABASE_TEST}
+      MYSQL_USER: ${DB_USERNAME_TEST}
+      MYSQL_PASSWORD: ${DB_PASSWORD_TEST}
+    volumes:
+      - gorestfulapitest-volume:/var/lib/mysql
+      - ./init_test.sql:/docker-entrypoint-initdb.d/init_test.sql
+    ports:
+      - 3312:3306
+    networks:
+      - category_restful
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: on-failure
+    depends_on:
+      - mysql
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=${DB_USERNAME}
+      - PMA_PASSWORD=${DB_PASSWORD}
+      - PMA
+    ports:
+      - 8001:80
+    networks:
+      - category_restful
+
+volumes:
+  gorestfulapi-volume:
+  gorestfulapitest-volume:
+
+networks:
+  category_restful:
+    driver: bridge
